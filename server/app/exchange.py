@@ -76,8 +76,11 @@ class Exchange:
         self.news: Deque[dict] = deque(maxlen=50)
         self.pending_trades: List[Trade] = []
 
-        for symbol, price in zip(settings.symbols, settings.start_prices):
-            self.books[symbol] = me.OrderBook()
+        # Interleave order ids across books (ACME 1, 3, 5... ZEUS 2, 4, 6...)
+        # so an order id is unique across the whole exchange.
+        book_count = len(settings.symbols)
+        for index, (symbol, price) in enumerate(zip(settings.symbols, settings.start_prices)):
+            self.books[symbol] = me.OrderBook(first_id=index + 1, id_stride=book_count)
             self.last_price[symbol] = self.to_ticks(price)
             self.candles[symbol] = deque(maxlen=settings.history_candles)
             self.trades[symbol] = deque(maxlen=200)
@@ -197,6 +200,8 @@ class Exchange:
             if price is None:
                 raise RejectError("limit orders need a price")
             price_ticks = self.to_ticks(price)
+            if abs(price / self.settings.tick_size - price_ticks) > 1e-6:
+                raise RejectError(f"price must be a multiple of {self.settings.tick_size}")
             self._check_price_band(symbol, price_ticks)
             result = book.add_limit(account.trader_id, engine_side, price_ticks, qty)
         elif order_type == "market":

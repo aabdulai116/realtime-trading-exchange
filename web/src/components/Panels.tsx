@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { api } from "../api";
 import type { Account, LeaderRow, News, OpenOrder, Trade } from "../types";
 
@@ -45,12 +46,25 @@ export function Positions({ account }: { account: Account | null }) {
 }
 
 export function OpenOrders({ apiKey, orders }: { apiKey: string; orders: OpenOrder[] }) {
+  const [error, setError] = useState("");
+
+  // An order can fill between the screen update and the click, so a failed
+  // cancel is normal; show it instead of throwing.
+  const run = async (action: () => Promise<unknown>) => {
+    setError("");
+    try {
+      await action();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   return (
     <div className="panel orders">
       <div className="panel-title">
         Open orders
         {orders.length > 0 && (
-          <button className="link" onClick={() => api.cancelAll(apiKey)}>
+          <button className="link" onClick={() => run(() => api.cancelAll(apiKey))}>
             Cancel all
           </button>
         )}
@@ -67,7 +81,7 @@ export function OpenOrders({ apiKey, orders }: { apiKey: string; orders: OpenOrd
                 <td>{o.qty}</td>
                 <td>@ {o.price.toFixed(2)}</td>
                 <td>
-                  <button className="link" onClick={() => api.cancel(apiKey, o.order_id)}>
+                  <button className="link" onClick={() => run(() => api.cancel(apiKey, o.order_id))}>
                     cancel
                   </button>
                 </td>
@@ -76,6 +90,7 @@ export function OpenOrders({ apiKey, orders }: { apiKey: string; orders: OpenOrd
           </tbody>
         </table>
       )}
+      {error && <div className="note err">{error}</div>}
     </div>
   );
 }

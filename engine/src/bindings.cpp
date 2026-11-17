@@ -44,7 +44,7 @@ PYBIND11_MODULE(matching_engine, m) {
         .def_readonly("self_trade_cancels", &AddResult::self_trade_cancels);
 
     py::class_<OrderBook>(m, "OrderBook")
-        .def(py::init<>())
+        .def(py::init<OrderId, OrderId>(), py::arg("first_id") = 1, py::arg("id_stride") = 1)
         .def("add_limit", &OrderBook::add_limit,
              py::arg("trader"), py::arg("side"), py::arg("price"), py::arg("qty"))
         .def("add_market", &OrderBook::add_market,

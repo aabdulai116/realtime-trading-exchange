@@ -31,7 +31,7 @@ export default function App() {
   const market = useMarket(apiKey);
   const symbols = Object.keys(market.books);
   const [symbol, setSymbol] = useState("ACME");
-  const [picked, setPicked] = useState<number | null>(null);
+  const [picked, setPicked] = useState<{ price: number; click: number } | null>(null);
 
   const book = market.books[symbol];
   const me = market.account?.name;
@@ -83,7 +83,11 @@ export default function App() {
 
       <main>
         <section className="col left">
-          <OrderBook book={book} myOrders={market.orders} onPick={setPicked} />
+          <OrderBook
+            book={book}
+            myOrders={market.orders}
+            onPick={(price) => setPicked((prev) => ({ price, click: (prev?.click ?? 0) + 1 }))}
+          />
         </section>
         <section className="col center">
           <PriceChart symbol={symbol} />

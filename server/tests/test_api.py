@@ -163,3 +163,105 @@ def test_names_are_unique(client, trader):
     response = client.post("/api/register", json={"name": "Alice"})
     assert response.status_code == 400
     assert client.post("/api/register", json={"name": "House MM"}).status_code == 400
+
+
+def test_off_tick_prices_are_rejected(client, trader):
+    alice = trader("alice")
+    bid, _ = best_prices(client)
+    response = client.post("/api/orders", headers=alice,
+                           json={"symbol": "ACME", "side": "buy", "qty": 1, "price": bid - 0.005})
+    assert response.status_code == 400
+    assert "multiple" in response.json()["detail"]
+
+
+def test_every_endpoint_runs_on_the_event_loop(app):
+    """Plain def endpoints run in a thread pool and race the market loop."""
+    import inspect
+
+    from fastapi.routing import APIRoute
+
+    for route in app.routes:
+        if not isinstance(route, APIRoute):
+            continue
+        assert inspect.iscoroutinefunction(route.endpoint), route.path
+        for dependency in route.dependant.dependencies:
+            assert inspect.iscoroutinefunction(dependency.call), route.path
+
+
+def test_market_loop_survives_a_failing_step():
+    import time as clock
+
+    from fastapi.testclient import TestClient
+
+    from app.config import Settings
+    from app.main import create_app
+
+    app = create_app(Settings(db_path=":memory:", run_simulation=True, tick_seconds=0.01))
+    simulation = app.state.simulation
+    real_step = simulation.step
+    calls = {"n": 0}
+
+    def flaky_step():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("boom")
+        real_step()
+
+    simulation.step = flaky_step
+    with TestClient(app):
+        clock.sleep(0.5)
+    assert calls["n"] > 5
+
+
+def test_shares_and_cash_are_conserved(client, trader, app):
+    """Every trade has a buyer and a seller, so totals across accounts stay at zero."""
+    exchange = app.state.exchange
+    simulation = app.state.simulation
+    alice = trader("alice")
+    for step in range(300):
+        simulation.step()
+        if step % 10 == 0:
+            client.post("/api/orders", headers=alice,
+                        json={"symbol": "ZEUS", "side": "buy" if step % 20 else "sell",
+                              "type": "market", "qty": 3})
+    for symbol in exchange.books:
+        total_shares = 0
+        for account in exchange.accounts.values():
+            total_shares += account.positions.get(symbol, 0)
+        assert total_shares == 0
+    total_cash = 0
+    for account in exchange.accounts.values():
+        total_cash += account.cash_ticks
+    assert total_cash == 0
+    assert exchange.next_trade_id > 100
+
+
+def test_order_ids_are_unique_across_symbols(client, trader, app):
+    alice = trader("alice")
+    acme_bid, _ = best_prices(client, "ACME")
+    zeus_bid, _ = best_prices(client, "ZEUS")
+    acme = client.post("/api/orders", headers=alice,
+                       json={"symbol": "ACME", "side": "buy", "qty": 1, "price": round(acme_bid - 0.5, 2)}).json()
+    zeus = client.post("/api/orders", headers=alice,
+                       json={"symbol": "ZEUS", "side": "buy", "qty": 1, "price": round(zeus_bid - 0.5, 2)}).json()
+    assert acme["order_id"] != zeus["order_id"]
+
+    # Cancelling the ZEUS order must leave the ACME order alone.
+    assert client.delete(f"/api/orders/{zeus['order_id']}", headers=alice).status_code == 200
+    remaining = client.get("/api/orders", headers=alice).json()
+    assert [o["symbol"] for o in remaining] == ["ACME"]
+
+
+def test_every_resting_order_can_be_found_after_trading(app):
+    exchange = app.state.exchange
+    simulation = app.state.simulation
+    for _ in range(500):
+        simulation.step()
+        simulation.ensure_liquidity()
+    live = {}
+    for symbol, book in exchange.books.items():
+        for account in exchange.accounts.values():
+            for order in book.orders_for(account.trader_id):
+                assert order.id not in live, "duplicate order id"
+                live[order.id] = symbol
+    assert live == exchange.order_symbol

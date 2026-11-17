@@ -6,7 +6,7 @@ interface Props {
   apiKey: string;
   symbol: string;
   book?: Book;
-  pickedPrice: number | null;
+  pickedPrice: { price: number; click: number } | null;
   maxQty: number;
 }
 
@@ -20,7 +20,7 @@ export function OrderTicket({ apiKey, symbol, book, pickedPrice, maxQty }: Props
 
   useEffect(() => {
     if (pickedPrice !== null) {
-      setPrice(pickedPrice.toFixed(2));
+      setPrice(pickedPrice.price.toFixed(2));
       setType("limit");
     }
   }, [pickedPrice]);

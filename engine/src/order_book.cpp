@@ -19,6 +19,19 @@ bool crosses(Side side, Price resting_price, const std::optional<Price>& limit) 
 
 }  // namespace
 
+OrderBook::OrderBook(OrderId first_id, OrderId id_stride)
+    : next_id_(first_id), id_stride_(id_stride) {
+    if (first_id == 0 || id_stride == 0) {
+        throw std::invalid_argument("first_id and id_stride must be positive");
+    }
+}
+
+OrderId OrderBook::take_id() {
+    OrderId id = next_id_;
+    next_id_ += id_stride_;
+    return id;
+}
+
 AddResult OrderBook::add_limit(TraderId trader, Side side, Price price, Qty qty) {
     if (qty <= 0) {
         throw std::invalid_argument("quantity must be positive");
@@ -27,7 +40,7 @@ AddResult OrderBook::add_limit(TraderId trader, Side side, Price price, Qty qty)
         throw std::invalid_argument("price must be positive");
     }
     AddResult result;
-    OrderId id = next_id_++;
+    OrderId id = take_id();
     Qty remaining = qty;
 
     if (side == Side::Buy) {
@@ -50,7 +63,7 @@ AddResult OrderBook::add_market(TraderId trader, Side side, Qty qty) {
         throw std::invalid_argument("quantity must be positive");
     }
     AddResult result;
-    OrderId id = next_id_++;
+    OrderId id = take_id();
     Qty remaining = qty;
 
     if (side == Side::Buy) {

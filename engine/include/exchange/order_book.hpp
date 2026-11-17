@@ -64,7 +64,10 @@ struct AddResult {
 
 class OrderBook {
 public:
-    OrderBook() = default;
+    // Order ids are first_id, first_id + id_stride, first_id + 2 * id_stride...
+    // An exchange running several books gives each book a different first_id
+    // and uses the number of books as the stride, so ids never collide.
+    explicit OrderBook(OrderId first_id = 1, OrderId id_stride = 1);
 
     AddResult add_limit(TraderId trader, Side side, Price price, Qty qty);
     AddResult add_market(TraderId trader, Side side, Qty qty);
@@ -96,12 +99,14 @@ private:
     void match(Book& book, TraderId trader, OrderId taker_id, Side side,
                std::optional<Price> limit, Qty& remaining, AddResult& result);
 
+    OrderId take_id();
     void rest(TraderId trader, Side side, Price price, Qty qty, OrderId id);
 
     BidMap bids_;
     AskMap asks_;
     std::unordered_map<OrderId, Locator> index_;
-    OrderId next_id_ = 1;
+    OrderId next_id_;
+    OrderId id_stride_;
     std::uint64_t seq_ = 0;
     std::uint64_t trade_count_ = 0;
     Qty volume_ = 0;

@@ -14,7 +14,8 @@ I built it to understand what happens inside an exchange and to practice for tra
 * **Risk checks** on every order: position limits that count resting orders, maximum order size, a price band around the market, and a per account rate limit.
 * **Simulated market** with a hidden fair value, news events, and four bots with different behavior (see below), so there is always something to trade against.
 * **Bot API and Python SDK**, with an example inventory skew market maker.
-* **Tested**: 10 C++ engine tests, 12 API tests, and a GitHub Actions pipeline that builds the engine, runs the tests and the benchmark, and builds the frontend.
+* **Tested**: 11 C++ engine tests and 18 API tests, including checks that shares and cash always net to zero across accounts and that every order id is unique. A GitHub Actions pipeline builds the engine, runs the tests and the benchmark, and builds the frontend.
+* **One writer at a time**: every API endpoint runs on the same event loop as the market simulation, so requests never race the bots for the order book or the database. Verified with 24 concurrent clients sending 3,600 requests.
 
 ## How it fits together
 
@@ -31,6 +32,8 @@ I built it to understand what happens inside an exchange and to practice for tra
           C++ matching engine (engine/)
      std::map price levels · FIFO queues
 ```
+
+Each book hands out order ids on its own stride (ACME 1, 3, 5... ZEUS 2, 4, 6...), so an id is unique across the whole exchange.
 
 ## The market
 

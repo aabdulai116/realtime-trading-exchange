@@ -122,6 +122,28 @@ static void volume_and_trade_counts() {
     CHECK(book.volume() == 3);
 }
 
+static void ids_follow_first_id_and_stride() {
+    OrderBook acme(1, 2);
+    OrderBook zeus(2, 2);
+    AddResult a1 = acme.add_limit(1, Side::Buy, 99, 1);
+    AddResult a2 = acme.add_limit(1, Side::Buy, 98, 1);
+    AddResult z1 = zeus.add_limit(1, Side::Buy, 99, 1);
+    AddResult z2 = zeus.add_market(1, Side::Sell, 1);   // market orders use an id too
+    AddResult z3 = zeus.add_limit(1, Side::Buy, 97, 1);
+    CHECK(a1.id == 1);
+    CHECK(a2.id == 3);
+    CHECK(z1.id == 2);
+    CHECK(z3.id == 6);
+    CHECK(z2.filled == 0);
+    bool threw = false;
+    try {
+        OrderBook bad(0, 1);
+    } catch (const std::invalid_argument&) {
+        threw = true;
+    }
+    CHECK(threw);
+}
+
 int main() {
     resting_orders_set_best_prices();
     market_order_walks_levels();
@@ -133,6 +155,7 @@ int main() {
     cancel_all_for_trader();
     rejects_bad_input();
     volume_and_trade_counts();
+    ids_follow_first_id_and_stride();
 
     if (failures == 0) {
         std::cout << "All engine tests passed\n";
