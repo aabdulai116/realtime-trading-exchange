@@ -1,0 +1,12 @@
+[build-system]
+requires = ["scikit-build-core>=0.8", "pybind11>=2.11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "matching-engine"
+version = "0.1.0"
+description = "C++ limit order book with Python bindings"
+requires-python = ">=3.9"
+
+[tool.scikit-build]
+cmake.build-type = "Release"

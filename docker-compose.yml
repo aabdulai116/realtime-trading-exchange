@@ -1,0 +1,9 @@
+services:
+  exchange:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - exchange-data:/data
+volumes:
+  exchange-data:

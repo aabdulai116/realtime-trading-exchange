@@ -1,0 +1,138 @@
+:root {
+  --bg: #0b0f16;
+  --panel: #111723;
+  --line: #1f2937;
+  --text: #e5e9f0;
+  --muted: #7d8899;
+  --green: #22c55e;
+  --red: #ef4444;
+  --accent: #60a5fa;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { font: inherit; cursor: pointer; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+td, th { padding: 3px 6px; text-align: right; white-space: nowrap; }
+td:first-child, th:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 500; }
+
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+.muted { color: var(--muted); font-weight: 400; }
+.small-print { margin-top: 6px; font-size: 12px; }
+.highlight { background: rgba(96, 165, 250, 0.12); }
+.tag { font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+header {
+  display: flex; align-items: center; gap: 20px;
+  padding: 10px 16px; border-bottom: 1px solid var(--line); background: #0d121b;
+}
+.brand { font-weight: 700; font-size: 15px; letter-spacing: 0.3px; }
+.logo { color: var(--accent); }
+.symbols { display: flex; gap: 6px; }
+.symbols button {
+  background: transparent; color: var(--muted); border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 12px; font-variant-numeric: tabular-nums;
+}
+.symbols button.on { color: var(--text); border-color: var(--accent); background: rgba(96, 165, 250, 0.08); }
+.status { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--muted); }
+.status a { color: var(--accent); text-decoration: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: inline-block; }
+.dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.who { color: var(--text); display: flex; gap: 8px; align-items: center; }
+
+.banner {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 10px 16px; background: #0f1a2b; border-bottom: 1px solid var(--line);
+}
+.register { display: flex; gap: 8px; align-items: center; }
+
+input {
+  background: #0b111b; color: var(--text); border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 9px; font: inherit; width: 100%;
+}
+input:focus { outline: none; border-color: var(--accent); }
+.register input { width: 200px; }
+.register button, .submit {
+  background: var(--accent); color: #04101f; border: 0; border-radius: 6px; padding: 7px 14px; font-weight: 600;
+}
+.register button:disabled { opacity: 0.5; }
+
+main {
+  flex: 1; display: grid; gap: 10px; padding: 10px;
+  grid-template-columns: 300px minmax(0, 1fr) 320px;
+}
+.col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.panel-title {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; margin-bottom: 8px;
+}
+.link { background: none; border: 0; color: var(--accent); padding: 0; font-size: 12px; }
+
+/* Order book ladder */
+.ladder-head, .ladder-row {
+  display: grid; grid-template-columns: 44px 1fr 1fr 48px; gap: 4px;
+  font-variant-numeric: tabular-nums; padding: 2px 6px;
+}
+.ladder-head { color: var(--muted); font-size: 11px; }
+.ladder-head span, .ladder-row span { text-align: right; }
+.ladder-row { position: relative; cursor: pointer; border-radius: 3px; }
+.ladder-row:hover { background: rgba(255, 255, 255, 0.05); }
+.ladder-row span { position: relative; z-index: 1; }
+.ladder-row .mine { color: var(--accent); font-weight: 600; }
+.ladder-row.sell .price { color: var(--red); }
+.ladder-row.buy .price { color: var(--green); }
+.ladder-row .count { color: var(--muted); }
+.depth-bar { position: absolute; right: 0; top: 1px; bottom: 1px; border-radius: 2px; }
+.ladder-row.sell .depth-bar { background: rgba(239, 68, 68, 0.14); }
+.ladder-row.buy .depth-bar { background: rgba(34, 197, 94, 0.14); }
+.spread-row {
+  display: flex; justify-content: space-between; color: var(--muted);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  margin: 4px 0; padding: 5px 6px; font-variant-numeric: tabular-nums;
+}
+
+.chart-box { height: 360px; }
+.tape .scroll, .news .scroll { max-height: 240px; overflow-y: auto; }
+.headline { padding: 5px 0; border-bottom: 1px solid var(--line); line-height: 1.35; }
+
+/* Ticket */
+.ticket label { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; color: var(--muted); }
+.toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.toggle button {
+  background: #0b111b; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 7px;
+}
+.toggle.small button { padding: 4px; font-size: 12px; }
+.toggle button.on { color: var(--text); border-color: var(--accent); }
+.toggle button.on.buy { background: rgba(34, 197, 94, 0.18); border-color: var(--green); }
+.toggle button.on.sell { background: rgba(239, 68, 68, 0.18); border-color: var(--red); }
+.quick { display: flex; gap: 6px; }
+.quick button {
+  flex: 1; background: none; border: 1px dashed var(--line); color: var(--muted); border-radius: 5px; padding: 3px;
+  font-size: 11px; font-variant-numeric: tabular-nums;
+}
+.submit { width: 100%; margin-top: 12px; padding: 9px; }
+.submit.buy { background: var(--green); }
+.submit.sell { background: var(--red); color: #fff; }
+.submit:disabled { opacity: 0.6; }
+.note { margin-top: 8px; font-size: 12px; }
+.note.ok { color: var(--green); }
+.note.err { color: var(--red); }
+
+.empty { color: var(--muted); }
+
+@media (max-width: 1100px) {
+  main { grid-template-columns: 1fr; }
+}
+
+.leaderboard td:nth-child(2) { text-align: left; }
+.tape td:nth-child(n + 4), .tape th:nth-child(n + 4) { text-align: left; }

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build C++ engine
+        run: cmake -S engine -B engine/build -DCMAKE_BUILD_TYPE=Release && cmake --build engine/build -j
+      - name: Engine tests
+        run: ./engine/build/engine_tests
+      - name: Benchmark
+        run: ./engine/build/engine_bench 500000
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install engine bindings and server
+        run: |
+          pip install ./engine
+          pip install -r server/requirements.txt
+      - name: API tests
+        run: python -m pytest server/tests -q
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
